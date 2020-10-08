@@ -1,4 +1,4 @@
-def get_state_transition(transitions_list, state, symbols):
+def set_state_transitions(transitions_list, state, symbols):
     resulting_states = []
     for symbol in symbols:
         temp = []
@@ -6,9 +6,9 @@ def get_state_transition(transitions_list, state, symbols):
             if (i[0] == state) and (i[1] == symbol):
                 temp.append(str(i[2]))
         if not temp:
-            resulting_states.append(['-1'])
+            resulting_states.append(('-1',))
         else:
-            resulting_states.append(temp)
+            resulting_states.append(tuple(temp))
     return resulting_states
 
 output = open('output.txt', 'a')
@@ -19,22 +19,25 @@ with open('input.txt') as txt:
         print('automata:')
         # LEITURA DADOS
         description = txt.readline().rstrip().split(' ')
+        initial_state = description[3]
         states = range(int(description[0]))
         for i in states:
             states[i] = str(states[i])
         symbols = range(int(description[1]))
         for i in symbols:
             symbols[i] = str(symbols[i])
-        acception_state = txt.readline()
+        acception_states = txt.readline().rstrip().split(' ')
         num_of_transitions = description[2]
         transitions = []
         print('description: ')
         print(description)
+        print('initial_state: ' + initial_state)
         print('states: ')
         print(states)
         print('symbols: ')
         print(symbols)
-        print('acception_state: ' + acception_state)
+        print('acception_state: ')
+        print(acception_states)
         print('num_of_transitions: ' + num_of_transitions)
         for transition in range(int(num_of_transitions)):
             transitions.append(txt.readline().rstrip().split(' '))
@@ -43,7 +46,7 @@ with open('input.txt') as txt:
         # CONSTRUCAO AUTOMATO
         delta = {}
         for state in states:
-            delta[state] = get_state_transition(transitions, state, symbols)
+            delta[state] = set_state_transitions(transitions, state, symbols)
         print('delta:')
         print(delta)
         
@@ -56,13 +59,8 @@ with open('input.txt') as txt:
         print('test_chains: ')
         print(test_chains)
 
-        output.write("\n")
+        # output.write("\n")
 txt.close()
-
-
-
-test = [['0', '1', '0'], ['0', '0', '1'], ['0', '1', '2']]
-
 
 
 
