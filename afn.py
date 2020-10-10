@@ -22,6 +22,23 @@ def set_state_transitions(transitions_list, state, symbols):
             resulting_states.append(tuple(temp))
     return resulting_states
 
+def state_has_zero(transitions_list, state):
+    states = []
+    for transition in transitions_list:
+        if transition[0] == state and transition[1] == '0':
+            states.append(transition[2])
+    return states
+
+def get_E(transtitions_list, state):
+    temp = [state]
+    for t in temp:
+        states = state_has_zero(transtitions_list, t)
+        for state in states:
+            if state not in temp:
+                temp.append(state)
+    return tuple(sorted(temp))
+
+
 # with open(args.output, 'a') as output:
 #     output.write("foi o teste\n")
 
@@ -32,8 +49,7 @@ with open(args.input, 'r') as input:
 
         # LEITURA DADOS obs: todos os estados devem ser tuplas
         description = input.readline().rstrip().split(' ')
-        initial_states = []
-        initial_states.append(description[3])
+        initial_state = description[3]
         states = range(int(description[0]))
         for i in states:
             states[i] = str(states[i])
@@ -49,17 +65,19 @@ with open(args.input, 'r') as input:
         delta = {}
         for state in states:
             delta[state] = set_state_transitions(transitions, state, symbols)
+        if state_has_zero(transitions, initial_state):
+            initial_state = get_E(transitions, initial_state)
+
         # TESTES
         num_of_test_chains = input.readline()
-        print('num_of_test_chains: ' + num_of_test_chains)
         test_chains = []
         for chain in range(int(num_of_test_chains)):
             test_chains.append(input.readline().rstrip().split(' '))
 
         print('description: ')
         print(description)
-        print('initial_states: ')
-        print(initial_states)
+        print('initial_state: ')
+        print(initial_state)
         print('states: ')
         print(states)
         print('symbols: ')
@@ -71,14 +89,11 @@ with open(args.input, 'r') as input:
         print(transitions)
         print('delta:')
         print(delta)
+        print('num_of_test_chains: ' + num_of_test_chains)
         print('test_chains: ')
         print(test_chains)
 input.close()
 
+# converter tupla em string
 # t = ('3',)
 # s = ''.join(t)
-
-
-
-
-
