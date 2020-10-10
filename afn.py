@@ -29,10 +29,10 @@ def state_has_zero(transitions_list, state):
             states.append(transition[2])
     return states
 
-def get_E(transtitions_list, state):
+def get_E(transitions_list, state):
     temp = [state]
     for t in temp:
-        states = state_has_zero(transtitions_list, t)
+        states = state_has_zero(transitions_list, t)
         for state in states:
             if state not in temp:
                 temp.append(state)
@@ -65,6 +65,7 @@ with open(args.input, 'r') as input:
         delta = {}
         for state in states:
             delta[state] = set_state_transitions(transitions, state, symbols)
+            delta[state].append(get_E(transitions, state))
         if state_has_zero(transitions, initial_state):
             initial_state = get_E(transitions, initial_state)
 
