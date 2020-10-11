@@ -1,5 +1,6 @@
 import argparse
 
+# CONFIGURACAO DOS ARQUIVOS DE ENTRADA E SAIDA VIA TERMINAL
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', dest='input',
                     help="input file", metavar='INPUT_FILE')
@@ -7,8 +8,10 @@ parser.add_argument('-o', dest='output',
                     help='output file', metavar='OUTPUT_FILE')
 args = parser.parse_args()
 
-open('output.txt', 'w').close()
+# RESET NO ARQUIVO DE SAIDA
+open(args.output, 'w').close()
 
+# FUNCAO QUE DEVOLVE AS TRANSICOES DE UM ESTADO DO AFN
 def set_state_transitions(transitions_list, state, symbols):
     resulting_states = []
     for symbol in symbols:
@@ -24,6 +27,7 @@ def set_state_transitions(transitions_list, state, symbols):
             resulting_states.append(tuple(sorted(temp, key = int)))
     return resulting_states
 
+# FUNCAO QUE DEVOLVE AS TRANSICOES DE UM ESTADO DO AFD EQUIVALENTE
 def set_state_transitions_afd(delta, state, symbols):
     transitions = ['-1']
     if '0' in symbols:
@@ -32,7 +36,6 @@ def set_state_transitions_afd(delta, state, symbols):
         for t in range(len(symbols)-1):
             transitions.append('-1')
         return transitions
-
     states = []
     for symbol in symbols:
         temp = []
@@ -55,6 +58,8 @@ def set_state_transitions_afd(delta, state, symbols):
     transitions.remove('-1')
     return list(transitions)[0]
 
+# FUNCAO QUE DEVOLVE OS ESTADOS ALCANCAVEIS COM TRANSICOES COM ZERO A PARTIR DO ESTADO
+# USADA PARA OBTER A COLUNA E NO DELTA DO AFN
 def get_E(delta, state):
     if state == '-1':
         return '-1'
@@ -66,6 +71,7 @@ def get_E(delta, state):
     states.remove('-1')
     return tuple(sorted(states, key = int))
 
+# CHECA SE O ESTADO TEM TRANSICOES COM ZERO E RETORNA OS ESTADOS PARA ONDE OCORRE A BIFURCACAO
 def state_has_zero(transitions_list, state):
     states = []
     for transition in transitions_list:
@@ -73,6 +79,8 @@ def state_has_zero(transitions_list, state):
             states.append(transition[2])
     return states
 
+# FUNCAO QUE CALCULA OS ESTADOS ALCANCAVEIS PARA UM DETERMINADO ESTADO
+# USADA PARA O DELTA DO AFD EQUIVALENTE
 def set_E(transitions_list, state):
     temp = [state]
     for t in temp:
@@ -84,18 +92,15 @@ def set_E(transitions_list, state):
         return str(list(temp)[0])
     return tuple(sorted(temp, key = int))
 
+# TESTA AS CADEIAS PARA CADA AUTOMATO E ESCREVE A SAIDA NO ARQUIVO ESCOLHIDO
 def test_automata(delta_afd, initial_state, acception_states, test_chains):
     with open(args.output, 'a') as output:
         to_write = ''
         for chain in test_chains:
             states = [initial_state]
-            print('chain:')
-            print(chain)
             if chain != ['0']:
                 for symbol in chain:
                     states.append(delta_afd[states[-1]][int(symbol)-1])
-            print('resultado:')
-            print(states)
             # checagem do estado final
             final_state = states[-1]
             chain_accepted = False
@@ -134,12 +139,14 @@ with open(args.input, 'r') as input:
         for transition in range(int(num_of_transitions)):
             transitions.append(input.readline().rstrip().split(' '))
         # CONSTRUCAO AUTOMATO
+        # CONSTRUCAO DO DELTA DO AFN
         delta = {}
         for state in states:
             delta[state] = set_state_transitions(transitions, state, symbols)
             delta[state].append(set_E(transitions, state))
         if state_has_zero(transitions, initial_state):
             initial_state = set_E(transitions, initial_state)
+        # CONSTRUCAO DO DELTA DO AFD EQUIVALENTE
         states_delta_afd = [initial_state]
         delta_afd = {}
         for s in states_delta_afd:
@@ -152,12 +159,11 @@ with open(args.input, 'r') as input:
                     new_t = t
                 if new_t not in states_delta_afd:
                     states_delta_afd.append(new_t)
-        # TESTES
+        # LEITURA DOS TESTES
         num_of_test_chains = input.readline()
         test_chains = []
         for chain in range(int(num_of_test_chains)):
             test_chains.append(input.readline().rstrip().split(' '))
-        print('delta_afd:')
-        print(delta_afd)
+        # APLICACAO DOS TESTES
         test_automata(delta_afd, initial_state, acception_states, test_chains)
 input.close()
