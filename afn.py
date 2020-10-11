@@ -19,32 +19,64 @@ def set_state_transitions(transitions_list, state, symbols):
         elif len(temp) == 1:
             resulting_states.append(temp[0])
         else:
-            resulting_states.append(tuple(temp))
+            resulting_states.append(tuple(sorted(temp, key = int)))
     return resulting_states
+
+
+# delta_afd: {'1': [('0',)], '0': [('0', '1'), ('1',)], ('0', '1'): [('0', '1'), ('1',)]}
+# symbols: ['1', '2']
+# delta: {'1': ['-1', '0', '-1', ('1',)], '0': ['1', '2', '-1', ('0', '1')], '2': ['-1', '1', ('1', '2'), ('2',)]}
 
 def set_state_transitions_afd(delta, state, symbols):
     transitions = ['-1']
     if '0' in symbols:
         symbols.remove('0')
-    for s in state: # s = '0'
-        states = []
-        for i in symbols: # i = '1'
-            temp_state = delta[s][int(i)] # ('0', '1')
-            if temp_state != '-1':
-                E_states = get_E(delta, temp_state) # ('0', '1')
-                states.append(E_states)
-        transitions.append(states)
-        transitions.remove('-1')
-        return list(transitions)[0]
+    if state == '-1':
+        for t in range(len(symbols)-1):
+            transitions.append('-1')
+        return transitions
+
+    # for s in state: # s = ('0', '1') para cada estado dentro do estado 0 e 1
+    #     states = []
+    #     for i in symbols: # pra cada simbolo
+    #         temp_state = delta[s][int(i)] # ('0', '1')
+    #         if temp_state != '-1':
+    #             E_states = get_E(delta, temp_state) # ('0', '1')
+    #             states.append(E_states)
+    states = []
+    for symbol in symbols: # para cada simbolo
+        temp = []
+        for s in state: # para cada estado dentro do estado
+            temp_state = delta[s][int(symbol)]
+            if temp_state == '-1':
+                continue
+            E_states = get_E(delta, temp_state)
+            for e in E_states:
+                temp.append(e)
+        if temp:
+            if len(temp) == 1:
+                states.append(temp[0])
+            else:
+                temp = list(set(temp))
+                states.append(tuple(sorted(temp, key = int)))
+        else: # temp vazio
+            states.append('-1')
+    transitions.append(states)
+    transitions.remove('-1')
+    return list(transitions)[0]
 
 def get_E(delta, state):
+    if state == '-1':
+        return '-1'
     states = {'-1'}
     for s in state: # ('0', '1')
        temp = delta[s][-1]
        for i in temp:
            states.add(i)
     states.remove('-1')
-    return tuple(states)
+    # if len(states) == 1:
+    #     states = str(list(states)[0])
+    return tuple(sorted(states, key = int))
 
 def state_has_zero(transitions_list, state):
     states = []
@@ -60,13 +92,22 @@ def set_E(transitions_list, state):
         for state in states:
             if state not in temp:
                 temp.append(state)
-    return tuple(sorted(temp))
+    # if len(states) == 1:
+    #     states = str(list(states)[0])
+    return tuple(sorted(temp, key = int))
 
-# def test_automata(delta_afd, acception_states, chain):
-#     states = []
+# def test_automata(delta_afd, initial_state, acception_states, chain):
+#     states = [initial_state]
 #     with open(args.output, 'a') as output:
 #         for symbol in chain:
-
+            # print('delta_afd:')
+            # print(delta_afd)
+            # print('states:')
+            # print(states)
+            # print('symbol:')
+            # print(symbol)
+            # states.append(delta_afd[states[-1]][int(symbol)])
+        # print(states)
 
 
 # with open(args.output, 'a') as output:
@@ -110,13 +151,13 @@ with open(args.input, 'r') as input:
                     new_t = t
                 if new_t not in states_delta_afd:
                     states_delta_afd.append(new_t)
-        print('delta_afd:')
-        print(delta_afd)
         # TESTES
         num_of_test_chains = input.readline()
         test_chains = []
         for chain in range(int(num_of_test_chains)):
             test_chains.append(input.readline().rstrip().split(' '))
+        # for chain in test_chains:
+            # test_automata(delta_afd,initial_state,acception_states,chain)
 
         # print('description: ')
         # print(description)
@@ -131,10 +172,10 @@ with open(args.input, 'r') as input:
         # print('num_of_transitions: ' + num_of_transitions)
         # print('transitions: ')
         # print(transitions)
-        # print('delta:')
-        # print(delta)
-        # print('delta_afd:')
-        # print(delta_afd)
+        print('delta:')
+        print(delta)
+        print('delta_afd:')
+        print(delta_afd)
         # print('num_of_test_chains: ' + num_of_test_chains)
         # print('test_chains: ')
         # print(test_chains)
