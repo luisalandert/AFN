@@ -1,17 +1,24 @@
-import argparse
+# coding=UTF-8
 
-# CONFIGURACAO DOS ARQUIVOS DE ENTRADA E SAIDA VIA TERMINAL
-parser = argparse.ArgumentParser()
-parser.add_argument('-i', dest='input',
-                    help="input file", metavar='INPUT_FILE')
-parser.add_argument('-o', dest='output',
-                    help='output file', metavar='OUTPUT_FILE')
-args = parser.parse_args()
+# Luísa Dipierri Landert           8010698
+# Natália de Ávila Degasperi       11207901
+
+# OBSERVAÇÕES:
+# O processamento dos dados do arquivo de texto em estruturas que representam o autômato
+# foi feito em funções separadas, explicadas brevemente nos comentários e com exemplo de
+# parâmetros e a saída.
+# para indicar transições que não existem nos dicionários delta e delta_afd
+# (que representam as tabelas de transições) é utilizado '-1'.
 
 # RESET NO ARQUIVO DE SAIDA
-open(args.output, 'w').close()
+open('saida.txt', 'w').close()
 
-# FUNCAO QUE DEVOLVE AS TRANSICOES DE UM ESTADO DO AFN
+# Função que devolve as transições de um estado do AFN
+# Exemplo de parâmetros:
+# TRANSITION_LIST: [['0', '1', '0'], ['0', '1', '1'], ['0', '2', '1'], ['1', '2', '0']]
+# STATE: 0
+# SYMBOLS: ['0', '1', '2']
+# Exemplo da saída: ['-1', ('0', '1'), '1']
 def set_state_transitions(transitions_list, state, symbols):
     resulting_states = []
     for symbol in symbols:
@@ -27,7 +34,15 @@ def set_state_transitions(transitions_list, state, symbols):
             resulting_states.append(tuple(sorted(temp, key = int)))
     return resulting_states
 
-# FUNCAO QUE DEVOLVE AS TRANSICOES DE UM ESTADO DO AFD EQUIVALENTE
+# Função que devolve as transições de um estado do AFD equilavente
+# Exemplo de parâmetros:
+# DELTA: {'1': ['-1', '-1', '0', '1'], '0': ['-1', ('0', '1'), '1', '0']}
+# STATE: 0
+# SYMBOLS: ['0', '1', '2']
+# Exemplo da saída: [('0', '1'), '1']
+# OBS: no caso do delta_afd (representação da tabela de transição do afd equilvalente)
+# o caso do 0, ou seja, cadeia vazia não entra como 'coluna' nessa estrutura pois já é
+# considerado nos estados e as mudanças necessárias são feitas lá.
 def set_state_transitions_afd(delta, state, symbols):
     transitions = ['-1']
     if '0' in symbols:
@@ -58,20 +73,32 @@ def set_state_transitions_afd(delta, state, symbols):
     transitions.remove('-1')
     return list(transitions)[0]
 
-# FUNCAO QUE DEVOLVE OS ESTADOS ALCANCAVEIS COM TRANSICOES COM ZERO A PARTIR DO ESTADO
-# USADA PARA OBTER A COLUNA E NO DELTA DO AFN
+# Função que devolve os estados alcançáveis com transições com zero (cadeia vazia)
+# a partir do estado.
+# Usada para auxiliar na construção do delta_afd (tabela de transição do AFD equivalente)
+# Exemplo de parâmetros:
+# DELTA: {'1': ['-1', '-1', '0', '1'], '0': ['-1', ('0', '1'), '1', '0']}
+# STATE: ('0', '1')
+# *esse seria um estado de um autômato que com cadeia vazia acessa os estados '0' e '1'
+# Exemplo da saída: ('0', '1')
+# *a partir do estado '('0', '1')' e com o delta apresentado é possível acessar os estados '0' e '1'
 def get_E(delta, state):
     if state == '-1':
         return '-1'
     states = {'-1'}
-    for s in state: # ('0', '1')
+    for s in state:
        temp = delta[s][-1]
        for i in temp:
            states.add(i)
     states.remove('-1')
     return tuple(sorted(states, key = int))
 
-# CHECA SE O ESTADO TEM TRANSICOES COM ZERO E RETORNA OS ESTADOS PARA ONDE OCORRE A BIFURCACAO
+# Checa se o estado tem transições com zero e retorna os estados para onde ocorre a bifurcação
+# Exemplo de parâmetros:
+# TRANSITION_LIST: [['0', '1', '0'], ['0', '1', '1'], ['0', '2', '1'], ['1', '2', '0']]
+# STATE: 0
+# Exemplo da saída: []
+# *o estado '0' não tem transições com cadeia vazia
 def state_has_zero(transitions_list, state):
     states = []
     for transition in transitions_list:
@@ -79,8 +106,14 @@ def state_has_zero(transitions_list, state):
             states.append(transition[2])
     return states
 
-# FUNCAO QUE CALCULA OS ESTADOS ALCANCAVEIS PARA UM DETERMINADO ESTADO
-# USADA PARA O DELTA DO AFD EQUIVALENTE
+# Função que calcula os estados alcançáveis para um determinado estado
+# usada para obter a coluna 'E' da tabela de transição do AFN (delta) e
+# o estado inicial do AFD equivalente quando tem transição com cadeia vazia
+# a partir do estado inicial
+# Exemplo de parâmetros:
+# TRANSITION_LIST: [['0', '1', '0'], ['0', '1', '1'], ['0', '2', '1'], ['1', '2', '0']]
+# STATE: 0
+# Exemplo da saída: 0
 def set_E(transitions_list, state):
     temp = [state]
     for t in temp:
@@ -92,9 +125,11 @@ def set_E(transitions_list, state):
         return str(list(temp)[0])
     return tuple(sorted(temp, key = int))
 
-# TESTA AS CADEIAS PARA CADA AUTOMATO E ESCREVE A SAIDA NO ARQUIVO ESCOLHIDO
+# Testa as cadeias para cada autômato e escreve a saída em saida.txt
+# usa os símbolos lidos em cada cadeia e busca o estado após a leitura
+# na tabela de transições do AFD equivalente (delta_afd)
 def test_automata(delta_afd, initial_state, acception_states, test_chains):
-    with open(args.output, 'a') as output:
+    with open('saida.txt', 'a') as output:
         to_write = ''
         for chain in test_chains:
             states = [initial_state]
@@ -120,8 +155,7 @@ def test_automata(delta_afd, initial_state, acception_states, test_chains):
         output.write("\n")
     output.close()
 
-
-with open(args.input, 'r') as input:
+with open('entrada.txt', 'r') as input:
     num_of_automata = input.readline()
     for automata in range(int(num_of_automata)):
         # LEITURA DADOS
@@ -138,21 +172,22 @@ with open(args.input, 'r') as input:
         transitions = []
         for transition in range(int(num_of_transitions)):
             transitions.append(input.readline().rstrip().split(' '))
-        # CONSTRUCAO AUTOMATO
-        # CONSTRUCAO DO DELTA DO AFN
+        # CONSTRUÇÃO AUTÔMATO
+        # CONSTRUÇÃO DO DELTA DO AFN
         delta = {}
         for state in states:
             delta[state] = set_state_transitions(transitions, state, symbols)
             delta[state].append(set_E(transitions, state))
+        # DEFINIÇÃO DO ESTADO INICIAL NO CASO DE TRANSIÇÃO COM CADEIA VAZIA
         if state_has_zero(transitions, initial_state):
             initial_state = set_E(transitions, initial_state)
-        # CONSTRUCAO DO DELTA DO AFD EQUIVALENTE
+        # CONSTRUÇÃO DO DELTA DO AFD EQUIVALENTE
         states_delta_afd = [initial_state]
         delta_afd = {}
-        for s in states_delta_afd:
-            x = set_state_transitions_afd(delta, s, symbols)
-            delta_afd[s] = x
-            for t in x:
+        for state in states_delta_afd:
+            transitions = set_state_transitions_afd(delta, state, symbols)
+            delta_afd[state] = transitions
+            for t in transitions:
                 if len(t) == 1:
                     new_t = ''.join(t)
                 else:
